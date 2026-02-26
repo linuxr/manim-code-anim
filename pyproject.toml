@@ -1,0 +1,7 @@
+[project]
+name = "manim-code-anim"
+version = "0.1.0"
+description = "代码输入动画效果"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["manim>=0.20.0"]
