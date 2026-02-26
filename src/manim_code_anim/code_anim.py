@@ -105,6 +105,8 @@ class CodeAnim(VGroup):
         theme: Theme = OneDark,
         font: str = "FiraCode Nerd Font Mono",
         chinese_font: str = "Microsoft YaHei",
+        title_font_size: int = 48,
+        code_font_size: int = 45,
         **kwargs: object,
     ):
         """
@@ -192,7 +194,9 @@ class CodeAnim(VGroup):
                 + "</span>"
             )
 
-        markup = MarkupText(finished_text, font=font, z_index=3)
+        markup = MarkupText(
+            finished_text, font=font, font_size=code_font_size, z_index=3
+        )
         markup.scale(0.4)
         background_rect = BackgroundRectangle(
             markup, color="#282C34", buff=0.2, fill_opacity=1
@@ -205,7 +209,9 @@ class CodeAnim(VGroup):
             )
             lang_font = chinese_font if lang_has_chinese else font
 
-            lang_name = MarkupText(language.name, font=lang_font, z_index=3)
+            lang_name = MarkupText(
+                language.name, font=lang_font, font_size=title_font_size, z_index=3
+            )
             lang_name.next_to(background_rect, UP)
             lang_name.set_color(language.color)
             lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
