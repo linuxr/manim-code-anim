@@ -2,10 +2,13 @@
 name = "manim-code-anim"
 version = "0.1.0"
 description = "代码输入动画效果"
+authors = [{ name = "databook", email = "linuxr@aliyun.com" }]
+maintainers = [{ name = "databook", email = "linuxr@aliyun.com" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["manim>=0.20.0", "tokenize-all-code>=1.0.18"]
 
-[project.entry-points."manim.plugins"]
-# "插件名" = "包名.模块名"
-"manim_code_anim" = "manim_code_anim.code_anim"
+
+[project.urls]
+Homepage = "https://github.com/linuxr/manim-code-anim"
