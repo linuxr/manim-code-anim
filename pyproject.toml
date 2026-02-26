@@ -4,4 +4,8 @@ version = "0.1.0"
 description = "代码输入动画效果"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["manim>=0.20.0"]
+dependencies = ["manim>=0.20.0", "tokenize-all-code>=1.0.18"]
+
+[project.entry-points."manim.plugins"]
+# "插件名" = "包名.模块名"
+"manim_code_anim" = "manim_code_anim.code_anim"
