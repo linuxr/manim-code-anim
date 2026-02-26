@@ -160,9 +160,19 @@ class CodeAnim(VGroup):
                         safe_value = regex.sub("&", "&amp;", token.value)
                         safe_value = regex.sub("<", "&lt;", safe_value)
                         safe_value = regex.sub(">", "&gt;", safe_value)
+
+                        # 检测整个safe_value是否包含中文
+                        has_chinese = any(
+                            "\u4e00" <= char <= "\u9fff" for char in safe_value
+                        )
+                        font_to_use = chinese_font if has_chinese else font
+
                         finished.append(
                             '<span foreground="'
                             + theme.color_for(token=token)
+                            + '" '
+                            + 'font_family="'
+                            + font_to_use
                             + '">'
                             + safe_value
                             + "</span>"
@@ -171,13 +181,18 @@ class CodeAnim(VGroup):
 
             finished_text = "".join(finished)
         else:
-            finished_text = '<span foreground="#FFFFFF">' + text + "</span>"
+            # 检测整个safe_value是否包含中文
+            has_chinese = any("\u4e00" <= char <= "\u9fff" for char in text)
+            font_to_use = chinese_font if has_chinese else font
+            finished_text = (
+                '<span foreground="#FFFFFF" font_family="'
+                + font_to_use
+                + '">'
+                + text
+                + "</span>"
+            )
 
-        # 检测整个文本是否包含中文
-        has_chinese = any("\u4e00" <= char <= "\u9fff" for char in text)
-        font_to_use = chinese_font if has_chinese else font
-
-        markup = MarkupText(finished_text, font=font_to_use, z_index=3)
+        markup = MarkupText(finished_text, font=font, z_index=3)
         markup.scale(0.4)
         background_rect = BackgroundRectangle(
             markup, color="#282C34", buff=0.2, fill_opacity=1
