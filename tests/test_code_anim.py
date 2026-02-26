@@ -9,7 +9,7 @@ from src.manim_code_anim.code_anim import CodeAnim, Python, JavaScript, Rust
 
 
 class TestCodeAnim(Scene):
-    """测试CodeBlock的基本功能"""
+    """测试CodeAnim的基本功能"""
 
     def construct(self) -> None:
         self.test_basic_usage()

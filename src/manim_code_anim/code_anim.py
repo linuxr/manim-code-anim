@@ -281,43 +281,43 @@ class CodeAnim(VGroup):
 
 
 C = ProgrammingLanguage("C")
-"""`C` 编程语言，用于在 `CodeBlocks` 中渲染 `C` 代码"""
+"""`C` 编程语言，用于在 `CodeAnim` 中渲染 `C` 代码"""
 
 Cpp = ProgrammingLanguage("C++", tokenize_name="Cpp")
-"""`C++` 编程语言，用于在 `CodeBlocks` 中渲染 `C++` 代码。"""
+"""`C++` 编程语言，用于在 `CodeAnim` 中渲染 `C++` 代码。"""
 
 CSharp = ProgrammingLanguage("C#", tokenize_name="CSharp")
-"""`C#` 编程语言，用于在 `CodeBlocks` 中渲染 `C#` 代码。"""
+"""`C#` 编程语言，用于在 `CodeAnim` 中渲染 `C#` 代码。"""
 
 Fortran = ProgrammingLanguage("Fortran")
-"""`Fortran` 编程语言，用于在 `CodeBlocks` 中渲染 Fortran 代码。"""
+"""`Fortran` 编程语言，用于在 `CodeAnim` 中渲染 Fortran 代码。"""
 
 Go = ProgrammingLanguage("Go")
-"""`Go` 编程语言，用于在 `CodeBlocks` 中渲染 `Go` 代码。"""
+"""`Go` 编程语言，用于在 `CodeAnim` 中渲染 `Go` 代码。"""
 
 Haskell = ProgrammingLanguage("Haskell")
-"""`Haskell` 编程语言，用于在 `CodeBlocks` 中渲染 `Haskell` 代码。"""
+"""`Haskell` 编程语言，用于在 `CodeAnim` 中渲染 `Haskell` 代码。"""
 
 Java = ProgrammingLanguage("Java")
-"""`Java` 编程语言，用于在 `CodeBlocks` 中渲染 `Java` 代码。"""
+"""`Java` 编程语言，用于在 `CodeAnim` 中渲染 `Java` 代码。"""
 
 JavaScript = ProgrammingLanguage("JavaScript")
-"""`JavaScript` 编程语言，用于在 `CodeBlocks` 中渲染 `JavaScript` 代码。"""
+"""`JavaScript` 编程语言，用于在 `CodeAnim` 中渲染 `JavaScript` 代码。"""
 
 Lua = ProgrammingLanguage("Lua")
-"""`Lua` 编程语言，用于在 `CodeBlocks` 中渲染 `Lua` 代码。 """
+"""`Lua` 编程语言，用于在 `CodeAnim` 中渲染 `Lua` 代码。 """
 
 Python = ProgrammingLanguage("Python")
-"""`Python` 编程语言，用于在 `CodeBlocks` 中渲染 `Python` 代码。"""
+"""`Python` 编程语言，用于在 `CodeAnim` 中渲染 `Python` 代码。"""
 
 Ruby = ProgrammingLanguage("Ruby")
-"""`Ruby` 编程语言，用于在 `CodeBlocks` 中渲染 `Ruby` 代码。"""
+"""`Ruby` 编程语言，用于在 `CodeAnim` 中渲染 `Ruby` 代码。"""
 
 Rust = ProgrammingLanguage("Rust")
-"""`Rust` 编程语言，用于在 `CodeBlocks` 中渲染 `Rust` 代码。"""
+"""`Rust` 编程语言，用于在 `CodeAnim` 中渲染 `Rust` 代码。"""
 
 SQL = ProgrammingLanguage("SQL")
-"""`SQL` 编程语言，用于在 `CodeBlocks` 中渲染 `SQL` 代码。"""
+"""`SQL` 编程语言，用于在 `CodeAnim` 中渲染 `SQL` 代码。"""
 
 TypeScript = ProgrammingLanguage("TypeScript")
-"""`TypeScript` 编程语言，用于在 `CodeBlocks` 中渲染 `TypeScript` 代码"""
+"""`TypeScript` 编程语言，用于在 `CodeAnim` 中渲染 `TypeScript` 代码"""
