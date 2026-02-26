@@ -7,7 +7,14 @@ maintainers = [{ name = "databook", email = "linuxr@aliyun.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["manim>=0.20.0", "tokenize-all-code>=1.0.18"]
+dependencies = [
+    "build>=1.4.0",
+    "manim>=0.20.0",
+    "setuptools>=82.0.0",
+    "tokenize-all-code>=1.0.18",
+    "twine>=6.2.0",
+    "wheel>=0.46.3",
+]
 
 
 [project.urls]
