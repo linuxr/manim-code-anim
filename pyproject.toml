@@ -1,6 +1,6 @@
 [project]
 name = "manim-code-anim"
-version = "0.1.0"
+version = "0.1.1"
 description = "代码输入动画效果"
 authors = [{ name = "databook", email = "linuxr@aliyun.com" }]
 maintainers = [{ name = "databook", email = "linuxr@aliyun.com" }]
