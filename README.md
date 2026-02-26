@@ -23,6 +23,15 @@
 
 ### 安装方法
 
+#### 方法一：使用 pip 安装（推荐）
+
+```bash
+# 直接从 PyPI 安装
+pip install manim-code-anim
+```
+
+#### 方法二：从源码安装
+
 ```bash
 # 克隆仓库
 git clone https://github.com/yourusername/manim-code-anim.git
@@ -31,6 +40,8 @@ cd manim-code-anim
 # 安装依赖
 pip install -e .
 ```
+
+项目已发布到 [PyPI](https://pypi.org/project/manim-code-anim/)，可以直接使用 pip 安装。
 
 ## 使用示例
 
