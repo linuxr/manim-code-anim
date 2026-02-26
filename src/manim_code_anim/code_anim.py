@@ -8,11 +8,11 @@ from .language_colors import language_colors
 
 
 class Theme:
-    """A theme used to syntax highlight a `CodeBlock`."""
+    """用于语法高亮 `CodeAnim` 的主题。"""
 
     colors: dict[str, list[str | Callable]]
     """
-    The colors of this theme represented as a dictionary. The keys of the dictionary are hexidecimal colors (such as `"#FFFFFF"`), and the values are lists of token types that should be colored with that color (such as `["keyword", "operation"]`).
+    该主题的颜色，以字典形式表示。字典的键是十六进制颜色（如 `"#FFFFFF"`），值是应该使用该颜色着色的令牌类型列表（如 `["keyword", "operation"]`）。
     """
 
     group_matchers: list[str]
@@ -21,13 +21,13 @@ class Theme:
         self, colors: dict[str, list[str | Callable]], group_matchers: list[str]
     ):
         """
-        Creates a new `Theme` with the specified `colors`. See the `colors` field for specification.
+        使用指定的 `colors` 创建新的 `Theme`。请参阅 `colors` 字段以了解规范。
         """
         self.colors = colors
         self.group_matchers = group_matchers
 
     def color_for(self, token: tokenize_all.Token) -> str:
-        """Returns the color for the given token as specified by this theme, or `"#FFFFFF"` if none is specified."""
+        """返回根据此主题为给定令牌指定的颜色，如果未指定则返回 `"#FFFFFF"`。"""
         for key, value in self.colors.items():
             if token.type in value:
                 return key
@@ -36,34 +36,34 @@ class Theme:
 
 OneDark = Theme(
     colors={
-        "#C678DD": ["keyword", "directive"],  # Purple
-        "#61AFEF": ["function"],  # Blue
-        "#E06C75": ["identifier"],  # Red
-        "#98C379": ["string"],  # Green
-        "#56B6C2": ["symbol"],  # Cyan
-        "#D19A66": ["number", "keyword literal"],  # Orange
-        "#E5C07B": ["class name"],  # Yellow
-        GRAY_C: ["comment"],  # Gray
+        "#C678DD": ["keyword", "directive"],  # 紫色
+        "#61AFEF": ["function"],  # 蓝色
+        "#E06C75": ["identifier"],  # 红色
+        "#98C379": ["string"],  # 绿色
+        "#56B6C2": ["symbol"],  # 青色
+        "#D19A66": ["number", "keyword literal"],  # 橙色
+        "#E5C07B": ["class name"],  # 黄色
+        "#888888": ["comment"],  # 灰色
     },
-    group_matchers=["#D19A66", "#C678DD", "#56B6C2"],  # Orange  # Purple  # Cyan
+    group_matchers=["#D19A66", "#C678DD", "#56B6C2"],  # 橙色  # 紫色  # 青色
 )
-"""The 'One Dark' theme from the `Atom` text editor."""
+"""来自 `Atom` 文本编辑器的 'One Dark' 主题。"""
 
 
 class ProgrammingLanguage(abstract):
-    """A programming language used to render `CodeBlocks`."""
+    """用于渲染 `CodeAnim` 的编程语言。"""
 
     name: str
-    """The name of the programming language. The name is displayed on the title card above the code block."""
+    """编程语言的名称。名称显示在代码块上方的标题卡片上。"""
 
     color: str
     """
-    The color of the programming language. The color is used when displaying the name in the title card above the code block. by default, the official GitHub language colors are used for supported languages, see https://github.com/ozh/github-colors/blob/master/colors.json.
+    编程语言的颜色。颜色用于在代码块上方的标题卡片中显示名称。默认情况下，对于支持的语言使用官方 GitHub 语言颜色，请参阅 https://github.com/ozh/github-colors/blob/master/colors.json。
     """
 
     language: tokenize_all.TokenizableLanguage
     """
-    The `TokenizableLanguage` of the language.
+    语言的 `TokenizableLanguage`。
     """
 
     def __init__(self, name: str, tokenize_name: str | None = None):
@@ -79,23 +79,23 @@ class ProgrammingLanguage(abstract):
 
 class CodeAnim(VGroup):
     """
-    A block of code. By default code blocks are rendered as `MarkupText` objects with `BackgroundRectangles` behind them. Furthermore, a title with the name and color of the language is rendered above the code block on the left-hand side. Syntax highlighting is done using `TextMates` by extracting `.tmLanguage.json` files from `microsoft/vscode`. See https://github.com/microsoft/vscode/tree/main/extensions.
+    代码块。默认情况下，代码块呈现为 `MarkupText` 对象，后面带有 `BackgroundRectangles`。此外，在代码块上方的左侧会显示一个包含语言名称和颜色的标题。语法高亮通过从 `microsoft/vscode` 提取 `.tmLanguage.json` 文件来使用 `TextMates` 完成。请参阅 https://github.com/microsoft/vscode/tree/main/extensions。
     """
 
     code: MarkupText
-    """The primary `MarkupText` object that makes up the code block. Equivalent to indexing at `[1]`."""
+    """构成代码块的主要 `MarkupText` 对象。相当于在 `[1]` 处索引。"""
 
     title: MarkupText
     """
-    The title `MarkupText` object that makes up the langauge name title at the top of the code block. Equivalent to indexing at `[3]
+    构成代码块顶部语言名称标题的标题 `MarkupText` 对象。相当于在 `[3]` 处索引。
     """
 
     code_background: BackgroundRectangle
-    """The `BackgroundRectangle` for the code block markup object. Equivalent to indexing at `[0]`."""
+    """代码块标记对象的 `BackgroundRectangle`。相当于在 `[0]` 处索引。"""
 
     title_background: BackgroundRectangle
     """
-    The `BackgroundRectangle` for the `title` object that lists the language name above the code block. Equivalent to indexing at `[2]`.
+    列出代码块上方语言名称的 `title` 对象的 `BackgroundRectangle`。相当于在 `[2]` 处索引。
     """
 
     def __init__(
@@ -103,23 +103,26 @@ class CodeAnim(VGroup):
         text: str,
         language: ProgrammingLanguage | None = None,
         theme: Theme = OneDark,
-        font: str = "consolas",
+        font: str = "FiraCode Nerd Font Mono",
+        chinese_font: str = "Microsoft YaHei",
         **kwargs: object,
     ):
         """
-        Creates a new `CodeBlock`.
+        创建新的 `CodeAnim`。
 
-        ### Parameters
+        ### 参数
         - `text [str]`:
-            - The source code to render.
+            - 要渲染的源代码。
         - `language [ProgrammingLanguage]`:
-            - The programming language to use when rendering the code. The language determines the text and color of the title of the code block, as well as the syntax highlighting of the code block.
+            - 渲染代码时使用的编程语言。语言决定代码块标题的文本和颜色，以及代码块的语法高亮。
         - `theme [Theme]`:
-            - The theme to highlight the code in. `OneDark` by default.
+            - 用于高亮代码的主题。默认为 `OneDark`。
         - `font [str]`:
-            - The font to render the code in. `Consolas` by default.
+            - 用于渲染代码的字体。默认为 `Consolas`。
+        - `chinese_font [str]`:
+            - 用于渲染中文字符的字体。默认为 `Microsoft YaHei`（微软雅黑）。
         - `**kwargs [Any]`:
-            - Additional arguments passed to `VGroup`.
+            - 传递给 `VGroup` 的其他参数。
         """
 
         if language:
@@ -170,19 +173,26 @@ class CodeAnim(VGroup):
         else:
             finished_text = '<span foreground="#FFFFFF">' + text + "</span>"
 
-        markup = MarkupText(
-            f'<span font="{font}">' + finished_text + "</span>", z_index=3
-        ).scale(0.4)
+        # 检测整个文本是否包含中文
+        has_chinese = any("\u4e00" <= char <= "\u9fff" for char in text)
+        font_to_use = chinese_font if has_chinese else font
+
+        markup = MarkupText(finished_text, font=font_to_use, z_index=3)
+        markup.scale(0.4)
         background_rect = BackgroundRectangle(
             markup, color="#282C34", buff=0.2, fill_opacity=1
         )
 
         if language:
-            lang_name = (
-                MarkupText(f'<span font="{font}">{language.name}</span>', z_index=3)
-                .next_to(background_rect, UP)
-                .set_color(language.color)
+            # 检测语言名称是否包含中文
+            lang_has_chinese = any(
+                "\u4e00" <= char <= "\u9fff" for char in language.name
             )
+            lang_font = chinese_font if lang_has_chinese else font
+
+            lang_name = MarkupText(language.name, font=lang_font, z_index=3)
+            lang_name.next_to(background_rect, UP)
+            lang_name.set_color(language.color)
             lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
 
             lang_background = BackgroundRectangle(
@@ -212,12 +222,12 @@ class CodeAnim(VGroup):
         self, **kwargs
     ) -> tuple[FadeIn, AddTextLetterByLetter, FadeIn, AddTextLetterByLetter]:
         """
-        Return a tuple of animations for creating the code block. Use such as:\n
+        返回用于创建代码块的动画元组。使用方式如下：\n
         ```
-        python = CodeBlock('print("Hello World!")', language = Python)
+        python = CodeAnim('print("Hello World!")', language = Python)
         self.play(*python.create())
         ```
-        By default the animation will `FadeIn` the `background` and `title_background`, and `AddTextLetterByLetter` the `code` and `title`.
+        默认情况下，动画将对 `background` 和 `title_background` 使用 `FadeIn`，对 `code` 和 `title` 使用 `AddTextLetterByLetter`。
         """
         if getattr(self, "title", None) and getattr(self, "title_background", None):
             return (
@@ -234,12 +244,12 @@ class CodeAnim(VGroup):
 
     def uncreate(self, **kwargs):
         """
-        Return a tuple of animations for uncreating the code block. Use such as:
+        返回用于取消创建代码块的动画元组。使用方式如下：
         ```
-        python = CodeBlock('print("Hello World!")', language = Python)
+        python = CodeAnim('print("Hello World!")', language = Python)
         self.play(*python.uncreate())
         ```
-        By default the animation will `FadeOut` the `background` and `title_background`, and `Uncreate` the `code` and `title`.
+        默认情况下，动画将对 `background` 和 `title_background` 使用 `FadeOut`，对 `code` 和 `title` 使用 `Uncreate`。
         """
         if getattr(self, "title", None) and getattr(self, "title_background", None):
             return (
@@ -256,43 +266,43 @@ class CodeAnim(VGroup):
 
 
 C = ProgrammingLanguage("C")
-"""The `C` programming language, used to render `C` code in `CodeBlocks`"""
+"""`C` 编程语言，用于在 `CodeBlocks` 中渲染 `C` 代码"""
 
 Cpp = ProgrammingLanguage("C++", tokenize_name="Cpp")
-"""The `C++` programming language, used to render `C++` code in `CodeBlocks`."""
+"""`C++` 编程语言，用于在 `CodeBlocks` 中渲染 `C++` 代码。"""
 
 CSharp = ProgrammingLanguage("C#", tokenize_name="CSharp")
-"""The `C#` programming language, used to render `C#` code in `CodeBlocks`."""
+"""`C#` 编程语言，用于在 `CodeBlocks` 中渲染 `C#` 代码。"""
 
 Fortran = ProgrammingLanguage("Fortran")
-"""The `Fortran` programming language, used to render Fortran code in `CodeBlocks`."""
+"""`Fortran` 编程语言，用于在 `CodeBlocks` 中渲染 Fortran 代码。"""
 
 Go = ProgrammingLanguage("Go")
-"""The `Go` programming language, used to render `Go` code in `CodeBlocks`."""
+"""`Go` 编程语言，用于在 `CodeBlocks` 中渲染 `Go` 代码。"""
 
 Haskell = ProgrammingLanguage("Haskell")
-"""The `Haskell` programming language, used to render `Haskell` code in `CodeBlocks`."""
+"""`Haskell` 编程语言，用于在 `CodeBlocks` 中渲染 `Haskell` 代码。"""
 
 Java = ProgrammingLanguage("Java")
-"""The `Java` programming language, used to render `Java` code in `CodeBlocks`."""
+"""`Java` 编程语言，用于在 `CodeBlocks` 中渲染 `Java` 代码。"""
 
 JavaScript = ProgrammingLanguage("JavaScript")
-"""The `JavaScript` programming language, used to render `JavaScript` code in `CodeBlocks`."""
+"""`JavaScript` 编程语言，用于在 `CodeBlocks` 中渲染 `JavaScript` 代码。"""
 
 Lua = ProgrammingLanguage("Lua")
-"""The `Lua` programming language, used to render `Lua` code in `CodeBlocks`. """
+"""`Lua` 编程语言，用于在 `CodeBlocks` 中渲染 `Lua` 代码。 """
 
 Python = ProgrammingLanguage("Python")
-"""The `Python` programming language, used to render `Python` code in `CodeBlocks`."""
+"""`Python` 编程语言，用于在 `CodeBlocks` 中渲染 `Python` 代码。"""
 
 Ruby = ProgrammingLanguage("Ruby")
-"""The `Ruby` programming language, used to render `Ruby` code in `CodeBlocks`."""
+"""`Ruby` 编程语言，用于在 `CodeBlocks` 中渲染 `Ruby` 代码。"""
 
 Rust = ProgrammingLanguage("Rust")
-"""The `Rust` programming language, used to render `Rust` code in `CodeBlocks`."""
+"""`Rust` 编程语言，用于在 `CodeBlocks` 中渲染 `Rust` 代码。"""
 
 SQL = ProgrammingLanguage("SQL")
-"""The `SQL` programming language, used to render `SQL` code in `CodeBlocks`."""
+"""`SQL` 编程语言，用于在 `CodeBlocks` 中渲染 `SQL` 代码。"""
 
 TypeScript = ProgrammingLanguage("TypeScript")
-"""The `TypeScript` programming language, used to render `TypeScript` code in `CodeBlocks`"""
+"""`TypeScript` 编程语言，用于在 `CodeBlocks` 中渲染 `TypeScript` 代码"""

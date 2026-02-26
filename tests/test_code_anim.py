@@ -63,7 +63,8 @@ console.log(greet("World"));
         # 测试Rust
         rust_code = """
 fn main() {
-    let message = "Hello World!";
+    // 这是一个中文注释
+    let message = "Hello World! 世界";
     println!("{}", message);
 }
 """
@@ -76,7 +77,9 @@ fn main() {
 
     def test_no_language(self):
         """测试不指定语言的情况"""
-        code = CodeAnim(text="This is some plain text without syntax highlighting")
+        code = CodeAnim(
+            text="This 中文显示 is some plain text without syntax highlighting"
+        )
         self.play(*code.create())
         self.wait(2)
         self.play(*code.uncreate())
@@ -85,5 +88,6 @@ fn main() {
 
 if __name__ == "__main__":
     # 运行测试场景
+    config.frame_rate = 10
     scene = TestCodeAnim()
     scene.render(preview=True)
