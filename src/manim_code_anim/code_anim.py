@@ -12,7 +12,7 @@ from manim import (
     FadeIn,
     FadeOut,
     MarkupText,
-    Uncreate,
+    Unwrite,
     VGroup,
     Write,
 )
@@ -252,17 +252,11 @@ class CodeAnim(VGroup):
         ```
         默认情况下，动画将对 `background` 和 `title_background` 使用 `FadeOut`，对 `code` 和 `title` 使用 `Uncreate`。
         """
-        if getattr(self, "title", None) and getattr(self, "title_background", None):
-            return (
-                FadeOut(self.code_background, **kwargs),
-                Uncreate(self.code, **kwargs),
-                FadeOut(self.title_background, **kwargs),
-                Uncreate(self.title, **kwargs),
-            )
-
         return (
             FadeOut(self.code_background, **kwargs),
-            Uncreate(self.code, **kwargs),
+            Unwrite(self.code, **kwargs),
+            FadeOut(self.title_background, **kwargs),
+            Unwrite(self.title, **kwargs),
         )
 
 
