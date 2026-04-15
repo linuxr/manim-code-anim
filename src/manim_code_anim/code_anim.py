@@ -1,9 +1,22 @@
-from manim import *
-import tokenize_all
-
 import re as regex
 from abc import ABC as abstract
 from typing import Callable
+
+import numpy as np
+import tokenize_all
+from manim import (
+    DOWN,
+    LEFT,
+    UP,
+    BackgroundRectangle,
+    FadeIn,
+    FadeOut,
+    MarkupText,
+    Uncreate,
+    VGroup,
+    Write,
+)
+
 from .language_colors import language_colors
 
 
@@ -71,9 +84,9 @@ class ProgrammingLanguage(abstract):
         self.language = getattr(tokenize_all, tokenize_name if tokenize_name else name)
         self.color = language_colors[name]["color"]
 
-        if self.color == None:
+        if self.color is None:
             print(f"Warning: no color found for {name}")
-        if self.language == None:
+        if self.language is None:
             print(f"Warning: no tokenization found for {name}")
 
 
@@ -101,7 +114,7 @@ class CodeAnim(VGroup):
     def __init__(
         self,
         text: str,
-        language: ProgrammingLanguage | None = None,
+        language: ProgrammingLanguage,
         theme: Theme = OneDark,
         font: str = "FiraCode Nerd Font Mono",
         chinese_font: str = "Microsoft YaHei",
@@ -127,72 +140,56 @@ class CodeAnim(VGroup):
             - 传递给 `VGroup` 的其他参数。
         """
 
-        if language:
-            lines = text.split("\n")
-            group_count = 0
-            finished: list[str] = []
-            for line in lines:
-                tokens = language.language.tokenize(line)
-                for token in tokens:
-                    if token.type.startswith("left"):
-                        finished.append(
-                            '<span foreground="'
-                            + theme.group_matchers[
-                                group_count % len(theme.group_matchers)
-                            ]
-                            + '">'
-                            + token.value
-                            + "</span>"
-                        )
-                        group_count += 1
-                    elif token.type.startswith("right"):
-                        group_count -= 1
-                        finished.append(
-                            '<span foreground="'
-                            + theme.group_matchers[
-                                group_count % len(theme.group_matchers)
-                            ]
-                            + '">'
-                            + token.value
-                            + "</span>"
-                        )
-                    elif token.type == "whitespace":
-                        finished.append(token.value)
-                    else:
-                        safe_value = regex.sub("&", "&amp;", token.value)
-                        safe_value = regex.sub("<", "&lt;", safe_value)
-                        safe_value = regex.sub(">", "&gt;", safe_value)
+        lines = text.split("\n")
+        group_count = 0
+        finished: list[str] = []
+        for line in lines:
+            tokens = language.language.tokenize(line)
+            for token in tokens:
+                if token.type.startswith("left"):
+                    finished.append(
+                        '<span foreground="'
+                        + theme.group_matchers[group_count % len(theme.group_matchers)]
+                        + '">'
+                        + token.value
+                        + "</span>"
+                    )
+                    group_count += 1
+                elif token.type.startswith("right"):
+                    group_count -= 1
+                    finished.append(
+                        '<span foreground="'
+                        + theme.group_matchers[group_count % len(theme.group_matchers)]
+                        + '">'
+                        + token.value
+                        + "</span>"
+                    )
+                elif token.type == "whitespace":
+                    finished.append(token.value)
+                else:
+                    safe_value = regex.sub("&", "&amp;", token.value)
+                    safe_value = regex.sub("<", "&lt;", safe_value)
+                    safe_value = regex.sub(">", "&gt;", safe_value)
 
-                        # 检测整个safe_value是否包含中文
-                        has_chinese = any(
-                            "\u4e00" <= char <= "\u9fff" for char in safe_value
-                        )
-                        font_to_use = chinese_font if has_chinese else font
+                    # 检测整个safe_value是否包含中文
+                    has_chinese = any(
+                        "\u4e00" <= char <= "\u9fff" for char in safe_value
+                    )
+                    font_to_use = chinese_font if has_chinese else font
 
-                        finished.append(
-                            '<span foreground="'
-                            + theme.color_for(token=token)
-                            + '" '
-                            + 'font_family="'
-                            + font_to_use
-                            + '">'
-                            + safe_value
-                            + "</span>"
-                        )
-                finished.append("\r")
+                    finished.append(
+                        '<span foreground="'
+                        + theme.color_for(token=token)
+                        + '" '
+                        + 'font_family="'
+                        + font_to_use
+                        + '">'
+                        + safe_value
+                        + "</span>"
+                    )
+            finished.append("\r")
 
-            finished_text = "".join(finished)
-        else:
-            # 检测整个safe_value是否包含中文
-            has_chinese = any("\u4e00" <= char <= "\u9fff" for char in text)
-            font_to_use = chinese_font if has_chinese else font
-            finished_text = (
-                '<span foreground="#FFFFFF" font_family="'
-                + font_to_use
-                + '">'
-                + text
-                + "</span>"
-            )
+        finished_text = "".join(finished)
 
         markup = MarkupText(
             finished_text, font=font, font_size=code_font_size, z_index=3
@@ -202,46 +199,35 @@ class CodeAnim(VGroup):
             markup, color="#282C34", buff=0.2, fill_opacity=1
         )
 
-        if language:
-            # 检测语言名称是否包含中文
-            lang_has_chinese = any(
-                "\u4e00" <= char <= "\u9fff" for char in language.name
-            )
-            lang_font = chinese_font if lang_has_chinese else font
+        # 检测语言名称是否包含中文
+        lang_has_chinese = any("\u4e00" <= char <= "\u9fff" for char in language.name)
+        lang_font = chinese_font if lang_has_chinese else font
 
-            lang_name = MarkupText(
-                language.name, font=lang_font, font_size=title_font_size, z_index=3
-            )
-            lang_name.next_to(background_rect, UP)
-            lang_name.set_color(language.color)
-            lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
+        lang_name = MarkupText(
+            language.name, font=lang_font, font_size=title_font_size, z_index=3
+        )
+        lang_name.next_to(background_rect, UP)
+        lang_name.set_color(language.color)
+        lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
 
-            lang_background = BackgroundRectangle(
-                lang_name, color="#282C34", buff=0.15, fill_opacity=1
-            )
-            pos = background_rect.get_corner(UP + LEFT) + np.array(
-                [lang_background.width / 2, lang_background.height / 2 - 0.005, 0]
-            )
+        lang_background = BackgroundRectangle(
+            lang_name, color="#282C34", buff=0.15, fill_opacity=1
+        )
+        pos = background_rect.get_corner(UP + LEFT) + np.array(
+            [lang_background.width / 2, lang_background.height / 2 - 0.005, 0]
+        )
 
-            VGroup(lang_name, lang_background).move_to(pos)
+        VGroup(lang_name, lang_background).move_to(pos)
 
-            self.title = lang_name
-            self.title_background = lang_background
+        self.title = lang_name
+        self.title_background = lang_background
 
-            super().__init__(
-                background_rect, markup, lang_background, lang_name, **kwargs
-            )
-        else:
-            self.title = None
-            self.title_background = None
-            super().__init__(background_rect, markup, **kwargs)
+        super().__init__(background_rect, markup, lang_background, lang_name, **kwargs)
 
         self.code = markup
         self.code_background = background_rect
 
-    def create(
-        self, **kwargs
-    ) -> tuple[FadeIn, AddTextLetterByLetter, FadeIn, AddTextLetterByLetter]:
+    def create(self, **kwargs) -> tuple[FadeIn, Write, FadeIn, Write]:
         """
         返回用于创建代码块的动画元组。使用方式如下：\n
         ```
@@ -250,17 +236,11 @@ class CodeAnim(VGroup):
         ```
         默认情况下，动画将对 `background` 和 `title_background` 使用 `FadeIn`，对 `code` 和 `title` 使用 `AddTextLetterByLetter`。
         """
-        if getattr(self, "title", None) and getattr(self, "title_background", None):
-            return (
-                FadeIn(self.code_background, **kwargs),
-                AddTextLetterByLetter(self.code, **kwargs),
-                FadeIn(self.title_background, **kwargs),
-                AddTextLetterByLetter(self.title, **kwargs),
-            )
-
         return (
             FadeIn(self.code_background, **kwargs),
-            AddTextLetterByLetter(self.code, **kwargs),
+            Write(self.code, **kwargs),
+            FadeIn(self.title_background, **kwargs),
+            Write(self.title, **kwargs),
         )
 
     def uncreate(self, **kwargs):

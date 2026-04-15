@@ -1,11 +1,12 @@
-import sys
 import os
+import sys
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from manim import *
-from src.manim_code_anim.code_anim import CodeAnim, Python, JavaScript, Rust
+from manim import Scene, config
+
+from src.manim_code_anim.code_anim import CodeAnim, JavaScript, Python, Rust
 
 
 class TestCodeAnim(Scene):
@@ -15,7 +16,6 @@ class TestCodeAnim(Scene):
         self.test_basic_usage()
         self.test_multiple_lines()
         self.test_different_languages()
-        self.test_no_language()
 
     def test_basic_usage(self):
         """测试基本使用方法"""
@@ -73,16 +73,6 @@ fn main() {
         self.play(*rust_anim.create())
         self.wait(2)
         self.play(*rust_anim.uncreate())
-        self.wait()
-
-    def test_no_language(self):
-        """测试不指定语言的情况"""
-        code = CodeAnim(
-            text="This 中文显示 is some plain text without syntax highlighting"
-        )
-        self.play(*code.create())
-        self.wait(2)
-        self.play(*code.uncreate())
         self.wait()
 
 
