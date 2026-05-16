@@ -1,7 +1,6 @@
 import re as regex
 from abc import ABC as abstract
 from typing import Callable
-
 import numpy as np
 import tokenize_all
 from manim import (
@@ -15,8 +14,8 @@ from manim import (
     Unwrite,
     VGroup,
     Write,
+    Rectangle,
 )
-
 from .language_colors import language_colors
 
 
@@ -83,7 +82,6 @@ class ProgrammingLanguage(abstract):
         self.name = name
         self.language = getattr(tokenize_all, tokenize_name if tokenize_name else name)
         self.color = language_colors[name]["color"]
-
         if self.color is None:
             print(f"Warning: no color found for {name}")
         if self.language is None:
@@ -111,6 +109,9 @@ class CodeAnim(VGroup):
     列出代码块上方语言名称的 `title` 对象的 `BackgroundRectangle`。相当于在 `[2]` 处索引。
     """
 
+    lines: list[str]  # 保存原始代码行
+    original_text: str  # 保存原始输入文本
+
     def __init__(
         self,
         text: str,
@@ -124,7 +125,6 @@ class CodeAnim(VGroup):
     ):
         """
         创建新的 `CodeAnim`。
-
         ### 参数
         - `text [str]`:
             - 要渲染的源代码。
@@ -139,44 +139,47 @@ class CodeAnim(VGroup):
         - `**kwargs [Any]`:
             - 传递给 `VGroup` 的其他参数。
         """
-
-        lines = text.split("\n")
+        self.original_text = text
+        self.lines = text.split("\n")
         group_count = 0
         finished: list[str] = []
-        for line in lines:
+
+        for line in self.lines:
             tokens = language.language.tokenize(line)
             for token in tokens:
                 if token.type.startswith("left"):
+                    # 只转义HTML/XML特殊字符
+                    escaped_value = self._escape_html_chars(token.value)
                     finished.append(
                         '<span foreground="'
                         + theme.group_matchers[group_count % len(theme.group_matchers)]
                         + '">'
-                        + token.value
+                        + escaped_value
                         + "</span>"
                     )
                     group_count += 1
                 elif token.type.startswith("right"):
                     group_count -= 1
+                    # 只转义HTML/XML特殊字符
+                    escaped_value = self._escape_html_chars(token.value)
                     finished.append(
                         '<span foreground="'
                         + theme.group_matchers[group_count % len(theme.group_matchers)]
                         + '">'
-                        + token.value
+                        + escaped_value
                         + "</span>"
                     )
                 elif token.type == "whitespace":
-                    finished.append(token.value)
+                    # 只转义HTML/XML特殊字符
+                    finished.append(self._escape_html_chars(token.value))
                 else:
-                    safe_value = regex.sub("&", "&amp;", token.value)
-                    safe_value = regex.sub("<", "&lt;", safe_value)
-                    safe_value = regex.sub(">", "&gt;", safe_value)
-
+                    # 只转义HTML/XML特殊字符
+                    safe_value = self._escape_html_chars(token.value)
                     # 检测整个safe_value是否包含中文
                     has_chinese = any(
                         "\u4e00" <= char <= "\u9fff" for char in safe_value
                     )
                     font_to_use = chinese_font if has_chinese else font
-
                     finished.append(
                         '<span foreground="'
                         + theme.color_for(token=token)
@@ -187,12 +190,18 @@ class CodeAnim(VGroup):
                         + safe_value
                         + "</span>"
                     )
-            finished.append("\r")
+            finished.append("\n")  # 使用真正的换行符
 
-        finished_text = "".join(finished)
+        # 移除最后多余的换行符
+        finished_text = "".join(finished).rstrip("\n")
 
+        # 创建代码文本对象
         markup = MarkupText(
-            finished_text, font=font, font_size=code_font_size, z_index=3
+            finished_text,
+            font=font,
+            font_size=code_font_size,
+            z_index=3,
+            tab_width=4,  # 设置制表符宽度
         )
         markup.scale(0.4)
         background_rect = BackgroundRectangle(
@@ -202,7 +211,6 @@ class CodeAnim(VGroup):
         # 检测语言名称是否包含中文
         lang_has_chinese = any("\u4e00" <= char <= "\u9fff" for char in language.name)
         lang_font = chinese_font if lang_has_chinese else font
-
         lang_name = MarkupText(
             language.name, font=lang_font, font_size=title_font_size, z_index=3
         )
@@ -213,23 +221,81 @@ class CodeAnim(VGroup):
         lang_background = BackgroundRectangle(
             lang_name, color="#282C34", buff=0.15, fill_opacity=1
         )
+
         pos = background_rect.get_corner(UP + LEFT) + np.array(
             [lang_background.width / 2, lang_background.height / 2 - 0.005, 0]
         )
-
         VGroup(lang_name, lang_background).move_to(pos)
 
         self.title = lang_name
         self.title_background = lang_background
-
         super().__init__(background_rect, markup, lang_background, lang_name, **kwargs)
-
         self.code = markup
         self.code_background = background_rect
 
+    def _escape_html_chars(self, text: str) -> str:
+        """转义HTML/XML特殊字符，但保留其他字符原样"""
+        text = text.replace("&", "&amp;")
+        text = text.replace("<", "&lt;")
+        text = text.replace(">", "&gt;")
+        text = text.replace('"', "&quot;")
+        text = text.replace("'", "&#x27;")
+        return text
+
+    def highlight_lines(self, color, lines: list[int]):
+        """
+        高亮指定的代码行
+
+        参数:
+        - color [ManimColor]: 高亮使用的颜色
+        - lines [list[int]]: 需要高亮的行号列表（从1开始计数）
+        """
+        # 确保行号有效（从1开始，转换为0索引）
+        valid_lines = [line - 1 for line in lines if 1 <= line <= len(self.lines)]
+
+        highlighted_rects = VGroup()
+
+        if not valid_lines or len(self.lines) == 0:
+            return highlighted_rects
+
+        # 计算每行的大致高度
+        line_height = self.code.height / len(self.lines) if len(self.lines) > 0 else 0.3
+
+        for line_idx in valid_lines:
+            # 创建一个矩形作为高亮背景
+            rect_width = self.code.width  # 代码宽度
+            rect_height = line_height * 0.8  # 稍小于行高
+
+            # 计算矩形的位置
+            # 获取代码框的左边界
+            left_edge = self.code.get_left()[0] + (self.code.width - rect_width) / 2
+
+            # 计算行的垂直位置
+            # 代码是从上到下排列的，第一行在最上面
+            y_pos = self.code.get_top()[1] - (line_idx + 0.5) * line_height
+
+            highlight_rect = Rectangle(
+                width=rect_width,
+                height=rect_height,
+                color=color,
+                fill_color=color,
+                fill_opacity=0.3,
+                stroke_opacity=0,
+            )
+
+            # 定位矩形
+            highlight_rect.move_to(
+                [left_edge + rect_width / 2, y_pos, 0]  # x位置  # y位置  # z位置
+            )
+
+            highlighted_rects.add(highlight_rect)
+
+        return highlighted_rects
+
     def create(self, **kwargs) -> tuple[FadeIn, Write, FadeIn, Write]:
         """
-        返回用于创建代码块的动画元组。使用方式如下：\n
+        返回用于创建代码块的动画元组。使用方式如下：
+
         ```
         python = CodeAnim('print("Hello World!")', language = Python)
         self.play(*python.create())
