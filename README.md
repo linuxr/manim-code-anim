@@ -143,6 +143,50 @@ class CustomFontCode(Scene):
         self.wait()
 ```
 
+### 高亮多行代码
+
+```python
+from manim import *
+from manim_code_anim.code_anim import CodeAnim, Python
+
+class HighlightLinesCode(Scene):
+    def construct(self):
+        python_code = '''
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+print(fibonacci(10))
+'''
+
+        code = CodeAnim(
+            text=python_code,
+            language=Python
+        )
+
+        # 播放创建动画
+        self.play(*code.create())
+        self.wait(1)
+
+        highlight1 = code.highlight_lines(BLUE, [1])
+        self.play(Create(highlight1))
+        self.wait(1)
+
+        # 高亮第2-4行（递归逻辑） - 用黄色，同时移除之前的蓝色高亮
+        highlight2 = code.highlight_lines(YELLOW, [2, 3, 4])
+        self.play(FadeOut(highlight1), Create(highlight2))
+        self.wait(1)
+
+        # 高亮第6行（注释）和第7-8行（测试代码）- 用绿色
+        highlight3 = code.highlight_lines(GREEN, [6, 7, 8])
+        self.play(FadeOut(highlight2), Create(highlight3))
+        self.wait(1)
+
+        self.play(*code.uncreate())
+        self.wait()
+```
+
 ### 支持的编程语言
 
 - C
