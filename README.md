@@ -19,7 +19,7 @@
 
 - Python 3.12+
 - Manim 0.20.0+
-- tokenize-all-code 1.0.18+
+- pygments 2.17.0+
 
 ### 安装方法
 
@@ -49,7 +49,7 @@ pip install -e .
 
 ```python
 from manim import *
-from manim_code_anim.code_anim import CodeAnim, Python
+from manim_code_anim import CodeAnim, Python
 
 class CodeAnimation(Scene):
     def construct(self):
@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
 ```python
 from manim import *
-from manim_code_anim.code_anim import CodeAnim, Python
+from manim_code_anim import CodeAnim, Python
 
 class MultiLineCode(Scene):
     def construct(self):
@@ -104,7 +104,7 @@ print(fibonacci(10))
 
 ```python
 from manim import *
-from manim_code_anim.code_anim import CodeAnim, Python
+from manim_code_anim import CodeAnim, Python
 
 class ChineseCode(Scene):
     def construct(self):
@@ -126,7 +126,7 @@ print("你好，世界！")  # 中文注释
 
 ```python
 from manim import *
-from manim_code_anim.code_anim import CodeAnim, Python
+from manim_code_anim import CodeAnim, Python
 
 class CustomFontCode(Scene):
     def construct(self):
@@ -147,7 +147,7 @@ class CustomFontCode(Scene):
 
 ```python
 from manim import *
-from manim_code_anim.code_anim import CodeAnim, Python
+from manim_code_anim import CodeAnim, Python
 
 class HighlightLinesCode(Scene):
     def construct(self):
