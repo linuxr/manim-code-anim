@@ -302,9 +302,8 @@ class CodeAnim(VGroup):
         group_count = 0
         finished: list[str] = []
 
-        # 计算 line_height 值（基于字体大小的倍数）
         # line_height=1.0 是默认值，0.5 会更紧凑
-        line_height_value = max(0.3, line_spacing)
+        line_height_value = max(0.2, line_spacing)
 
         for line in self.lines:
             tokens = language.language.tokenize(line)
@@ -428,21 +427,24 @@ class CodeAnim(VGroup):
         if not valid_lines or len(self.lines) == 0:
             return highlighted_rects
 
-        # 计算每行的大致高度
-        line_height = self.code.height / len(self.lines) if len(self.lines) > 0 else 0.3
+        # 获取代码的实际高度和宽度
+        code_height = self.code.height
+        code_width = self.code.width
+        code_top = self.code.get_top()[1]
+        code_left = self.code.get_left()[0]
+
+        # 计算每行的实际高度（考虑 line_spacing）
+        # 使用更精确的计算：总高度除以行数
+        line_height = code_height / len(self.lines) if len(self.lines) > 0 else 0.3
 
         for line_idx in valid_lines:
             # 创建一个矩形作为高亮背景
-            rect_width = self.code.width  # 代码宽度
-            rect_height = line_height * 0.8  # 稍小于行高
+            rect_width = code_width
+            rect_height = line_height * 0.9  # 稍小于行高
 
-            # 计算矩形的位置
-            # 获取代码框的左边界
-            left_edge = self.code.get_left()[0] + (self.code.width - rect_width) / 2
-
-            # 计算行的垂直位置
-            # 代码是从上到下排列的，第一行在最上面
-            y_pos = self.code.get_top()[1] - (line_idx + 0.5) * line_height
+            # 计算行的垂直位置（从上到下）
+            # 第一行的中心在 code_top - line_height/2
+            y_pos = code_top - (line_idx + 0.5) * line_height
 
             highlight_rect = Rectangle(
                 width=rect_width,
@@ -455,7 +457,7 @@ class CodeAnim(VGroup):
 
             # 定位矩形
             highlight_rect.move_to(
-                [left_edge + rect_width / 2, y_pos, 0]  # x位置  # y位置  # z位置
+                [code_left + rect_width / 2, y_pos, 0]
             )
 
             highlighted_rects.add(highlight_rect)
