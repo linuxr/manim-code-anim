@@ -1,22 +1,171 @@
-import re as regex
 from abc import ABC as abstract
 from typing import Callable
-import numpy as np
-import tokenize_all
+
 from manim import (
-    DOWN,
-    LEFT,
-    UP,
     BackgroundRectangle,
+    DOWN,
     FadeIn,
     FadeOut,
+    LEFT,
     MarkupText,
+    Rectangle,
+    UP,
     Unwrite,
     VGroup,
     Write,
-    Rectangle,
 )
+import numpy as np
+from pygments import lex
+from pygments.lexers import get_lexer_by_name
+from pygments.token import Token as PygmentsToken
+from pygments.util import ClassNotFound
+
 from .language_colors import language_colors
+
+
+# 创建 Token 类以兼容旧的 tokenize_all API
+class Token:
+    """兼容 tokenize_all.Token 的包装类"""
+
+    def __init__(
+        self,
+        type: str,
+        value: str,
+        start: int = 0,
+        line_number: int = 1,
+        line_start: int = 0,
+    ):
+        self.type = type
+        self.value = value
+        self.start = start
+        self.line_number = line_number
+        self.line_start = line_start
+
+    def __str__(self):
+        return f"Token[ type = {self.type}, value = {repr(self.value)}, start = {self.start}, line_number = {self.line_number}, line_start = {self.line_start} ]"
+
+
+# Pygments token 类型到 tokenize_all 风格的映射
+PYGMENTS_TO_OLD_STYLE = {
+    PygmentsToken.Keyword: "keyword",
+    PygmentsToken.Keyword.Constant: "keyword literal",
+    PygmentsToken.Keyword.Declaration: "keyword",
+    PygmentsToken.Keyword.Namespace: "keyword",
+    PygmentsToken.Keyword.Pseudo: "keyword literal",
+    PygmentsToken.Keyword.Reserved: "keyword",
+    PygmentsToken.Keyword.Type: "keyword",
+    PygmentsToken.Name: "identifier",
+    PygmentsToken.Name.Builtin: "identifier",
+    PygmentsToken.Name.Class: "class name",
+    PygmentsToken.Name.Function: "function",
+    PygmentsToken.Name.Decorator: "function",
+    PygmentsToken.Name.Variable: "identifier",
+    PygmentsToken.Name.Constant: "constant",
+    PygmentsToken.Name.Attribute: "identifier",
+    PygmentsToken.Name.Label: "identifier",
+    PygmentsToken.Name.Namespace: "identifier",
+    PygmentsToken.Name.Tag: "identifier",
+    PygmentsToken.Literal.String: "string",
+    PygmentsToken.Literal.String.Double: "string",
+    PygmentsToken.Literal.String.Single: "string",
+    PygmentsToken.Literal.String.Doc: "string",
+    PygmentsToken.Literal.String.Backtick: "string",
+    PygmentsToken.Literal.String.Char: "string",
+    PygmentsToken.Literal.String.Escape: "string",
+    PygmentsToken.Literal.String.Heredoc: "string",
+    PygmentsToken.Literal.String.Interpol: "string",
+    PygmentsToken.Literal.String.Other: "string",
+    PygmentsToken.Literal.String.Regex: "string",
+    PygmentsToken.Literal.String.Symbol: "string",
+    PygmentsToken.Literal.Number: "number",
+    PygmentsToken.Literal.Number.Float: "number",
+    PygmentsToken.Literal.Number.Hex: "number",
+    PygmentsToken.Literal.Number.Integer: "number",
+    PygmentsToken.Literal.Number.Oct: "number",
+    PygmentsToken.Literal.Number.Bin: "number",
+    PygmentsToken.Operator: "symbol",
+    PygmentsToken.Operator.Word: "keyword",
+    PygmentsToken.Punctuation: "symbol",
+    PygmentsToken.Comment: "comment",
+    PygmentsToken.Comment.Single: "comment",
+    PygmentsToken.Comment.Multiline: "comment",
+    PygmentsToken.Comment.Preproc: "directive",
+    PygmentsToken.Comment.PreprocFile: "directive",
+    PygmentsToken.Comment.Hashbang: "comment",
+    PygmentsToken.Comment.Special: "comment",
+    PygmentsToken.Text.Whitespace: "whitespace",
+    PygmentsToken.Text: "whitespace",
+    PygmentsToken.Error: "identifier",
+    PygmentsToken.Other: "whitespace",
+}
+
+
+def _map_pygments_token(pygments_token) -> str:
+    """将 Pygments token 映射为旧的 tokenize_all 风格字符串"""
+    # 尝试精确匹配
+    if pygments_token in PYGMENTS_TO_OLD_STYLE:
+        return PYGMENTS_TO_OLD_STYLE[pygments_token]
+
+    # 尝试父级匹配
+    parent = pygments_token.parent
+    while parent and parent != PygmentsToken:
+        if parent in PYGMENTS_TO_OLD_STYLE:
+            return PYGMENTS_TO_OLD_STYLE[parent]
+        parent = parent.parent
+
+    # 默认返回 identifier
+    return "identifier"
+
+
+class PygmentsLanguageAdapter:
+    """将 Pygments lexer 适配为 tokenize_all 风格的接口"""
+
+    def __init__(self, lexer_name: str):
+        self.lexer_name = lexer_name
+        try:
+            self.lexer = get_lexer_by_name(lexer_name)
+        except ClassNotFound:
+            print(f"Warning: no lexer found for {lexer_name}")
+            self.lexer = None
+
+    def tokenize(self, code: str) -> list[Token]:
+        """使用 Pygments 对代码进行分词，返回兼容旧 API 的 Token 列表"""
+        if self.lexer is None:
+            return [Token(type="identifier", value=code)]
+
+        tokens = []
+        pos = 0
+        line_number = 1
+        line_start = 0
+
+        for pygments_token_type, value in self.lexer.get_tokens(code):
+            # 跳过 ENDMARKER
+            if pygments_token_type == PygmentsToken.Text and value == "":
+                continue
+
+            token_type = _map_pygments_token(pygments_token_type)
+
+            token = Token(
+                type=token_type,
+                value=value,
+                start=pos,
+                line_number=line_number,
+                line_start=line_start,
+            )
+            tokens.append(token)
+
+            # 更新位置信息
+            pos += len(value)
+            if "\n" in value:
+                lines = value.split("\n")
+                line_number += len(lines) - 1
+                line_start = (
+                    len(lines[-1]) if len(lines) > 1 else line_start + len(value)
+                )
+            else:
+                line_start += len(value)
+
+        return tokens
 
 
 class Theme:
@@ -38,7 +187,7 @@ class Theme:
         self.colors = colors
         self.group_matchers = group_matchers
 
-    def color_for(self, token: tokenize_all.Token) -> str:
+    def color_for(self, token: Token) -> str:
         """返回根据此主题为给定令牌指定的颜色，如果未指定则返回 `"#FFFFFF"`。"""
         for key, value in self.colors.items():
             if token.type in value:
@@ -73,19 +222,21 @@ class ProgrammingLanguage(abstract):
     编程语言的颜色。颜色用于在代码块上方的标题卡片中显示名称。默认情况下，对于支持的语言使用官方 GitHub 语言颜色，请参阅 https://github.com/ozh/github-colors/blob/master/colors.json。
     """
 
-    language: tokenize_all.TokenizableLanguage
+    language: PygmentsLanguageAdapter
     """
-    语言的 `TokenizableLanguage`。
+    语言的 `PygmentsLanguageAdapter`。
     """
 
-    def __init__(self, name: str, tokenize_name: str | None = None):
+    def __init__(self, name: str, pygments_name: str | None = None):
         self.name = name
-        self.language = getattr(tokenize_all, tokenize_name if tokenize_name else name)
+        self.language = PygmentsLanguageAdapter(
+            pygments_name if pygments_name else name.lower()
+        )
         self.color = language_colors[name]["color"]
         if self.color is None:
             print(f"Warning: no color found for {name}")
-        if self.language is None:
-            print(f"Warning: no tokenization found for {name}")
+        if self.language.lexer is None:
+            print(f"Warning: no lexer found for {name}")
 
 
 class CodeAnim(VGroup):
@@ -121,6 +272,7 @@ class CodeAnim(VGroup):
         chinese_font: str = "Microsoft YaHei",
         title_font_size: int = 48,
         code_font_size: int = 45,
+        line_spacing: float = 0.2,
         **kwargs: object,
     ):
         """
@@ -136,6 +288,12 @@ class CodeAnim(VGroup):
             - 用于渲染代码的字体。默认为 `Consolas`。
         - `chinese_font [str]`:
             - 用于渲染中文字符的字体。默认为 `Microsoft YaHei`（微软雅黑）。
+        - `title_font_size [int]`:
+            - 标题字体大小。默认为 48。
+        - `code_font_size [int]`:
+            - 代码字体大小。默认为 45。
+        - `line_spacing [float]`:
+            - 代码行间距。值越小行间距越紧凑，默认为 0.6。
         - `**kwargs [Any]`:
             - 传递给 `VGroup` 的其他参数。
         """
@@ -143,6 +301,10 @@ class CodeAnim(VGroup):
         self.lines = text.split("\n")
         group_count = 0
         finished: list[str] = []
+
+        # 计算 line_height 值（基于字体大小的倍数）
+        # line_height=1.0 是默认值，0.5 会更紧凑
+        line_height_value = max(0.3, line_spacing)
 
         for line in self.lines:
             tokens = language.language.tokenize(line)
@@ -153,6 +315,8 @@ class CodeAnim(VGroup):
                     finished.append(
                         '<span foreground="'
                         + theme.group_matchers[group_count % len(theme.group_matchers)]
+                        + '" line_height="'
+                        + str(line_height_value)
                         + '">'
                         + escaped_value
                         + "</span>"
@@ -165,6 +329,8 @@ class CodeAnim(VGroup):
                     finished.append(
                         '<span foreground="'
                         + theme.group_matchers[group_count % len(theme.group_matchers)]
+                        + '" line_height="'
+                        + str(line_height_value)
                         + '">'
                         + escaped_value
                         + "</span>"
@@ -186,11 +352,15 @@ class CodeAnim(VGroup):
                         + '" '
                         + 'font_family="'
                         + font_to_use
+                        + '" line_height="'
+                        + str(line_height_value)
                         + '">'
                         + safe_value
                         + "</span>"
                     )
-            finished.append("\n")  # 使用真正的换行符
+            finished.append(
+                '<span line_height="' + str(line_height_value) + '">\n</span>'
+            )  # 使用带 line_height 的换行符
 
         # 移除最后多余的换行符
         finished_text = "".join(finished).rstrip("\n")
@@ -239,7 +409,7 @@ class CodeAnim(VGroup):
         text = text.replace("<", "&lt;")
         text = text.replace(">", "&gt;")
         text = text.replace('"', "&quot;")
-        text = text.replace("'", "&#x27;")
+        text = text.replace("'", "&#39;")
         return text
 
     def highlight_lines(self, color, lines: list[int]):
@@ -326,44 +496,44 @@ class CodeAnim(VGroup):
         )
 
 
-C = ProgrammingLanguage("C")
+C = ProgrammingLanguage("C", pygments_name="c")
 """`C` 编程语言，用于在 `CodeAnim` 中渲染 `C` 代码"""
 
-Cpp = ProgrammingLanguage("C++", tokenize_name="Cpp")
+Cpp = ProgrammingLanguage("C++", pygments_name="cpp")
 """`C++` 编程语言，用于在 `CodeAnim` 中渲染 `C++` 代码。"""
 
-CSharp = ProgrammingLanguage("C#", tokenize_name="CSharp")
+CSharp = ProgrammingLanguage("C#", pygments_name="csharp")
 """`C#` 编程语言，用于在 `CodeAnim` 中渲染 `C#` 代码。"""
 
-Fortran = ProgrammingLanguage("Fortran")
+Fortran = ProgrammingLanguage("Fortran", pygments_name="fortran")
 """`Fortran` 编程语言，用于在 `CodeAnim` 中渲染 Fortran 代码。"""
 
-Go = ProgrammingLanguage("Go")
+Go = ProgrammingLanguage("Go", pygments_name="go")
 """`Go` 编程语言，用于在 `CodeAnim` 中渲染 `Go` 代码。"""
 
-Haskell = ProgrammingLanguage("Haskell")
+Haskell = ProgrammingLanguage("Haskell", pygments_name="haskell")
 """`Haskell` 编程语言，用于在 `CodeAnim` 中渲染 `Haskell` 代码。"""
 
-Java = ProgrammingLanguage("Java")
+Java = ProgrammingLanguage("Java", pygments_name="java")
 """`Java` 编程语言，用于在 `CodeAnim` 中渲染 `Java` 代码。"""
 
-JavaScript = ProgrammingLanguage("JavaScript")
+JavaScript = ProgrammingLanguage("JavaScript", pygments_name="javascript")
 """`JavaScript` 编程语言，用于在 `CodeAnim` 中渲染 `JavaScript` 代码。"""
 
-Lua = ProgrammingLanguage("Lua")
+Lua = ProgrammingLanguage("Lua", pygments_name="lua")
 """`Lua` 编程语言，用于在 `CodeAnim` 中渲染 `Lua` 代码。 """
 
-Python = ProgrammingLanguage("Python")
+Python = ProgrammingLanguage("Python", pygments_name="python")
 """`Python` 编程语言，用于在 `CodeAnim` 中渲染 `Python` 代码。"""
 
-Ruby = ProgrammingLanguage("Ruby")
+Ruby = ProgrammingLanguage("Ruby", pygments_name="ruby")
 """`Ruby` 编程语言，用于在 `CodeAnim` 中渲染 `Ruby` 代码。"""
 
-Rust = ProgrammingLanguage("Rust")
+Rust = ProgrammingLanguage("Rust", pygments_name="rust")
 """`Rust` 编程语言，用于在 `CodeAnim` 中渲染 `Rust` 代码。"""
 
-SQL = ProgrammingLanguage("SQL")
+SQL = ProgrammingLanguage("SQL", pygments_name="sql")
 """`SQL` 编程语言，用于在 `CodeAnim` 中渲染 `SQL` 代码。"""
 
-TypeScript = ProgrammingLanguage("TypeScript")
+TypeScript = ProgrammingLanguage("TypeScript", pygments_name="typescript")
 """`TypeScript` 编程语言，用于在 `CodeAnim` 中渲染 `TypeScript` 代码"""
